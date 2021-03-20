@@ -5,10 +5,6 @@ import (
 	"testing"
 )
 
-func TestPrint1(t *testing.T) {
-	frost.Print1()
-}
-
-func TestPrint2(t *testing.T) {
-	frost.Print2()
+func TestRunnable(t *testing.T) {
+	_, _ = frost.KeyGen_send(3, 4, 10, "123")
 }
