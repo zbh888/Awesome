@@ -1,0 +1,1 @@
+module "github.com/zbh888/awsome"
