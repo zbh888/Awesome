@@ -43,18 +43,37 @@ func isValid(pkg PkgCommitment, str string) bool {
 }
 
 func VerifyShare(share Share, receiver uint32, AllCommitment []PublicCommitment) bool {
-	return true
+	sender := share.Sender
+	verifier := share.Receiver
+	shareCommitment := ed.ScalarMultiplyBase(share.Value)
+	var pCommitment []ed.Element
+	for _,s := range AllCommitment { //We might consider sorting them first
+		if s.Index == sender {
+			pCommitment = s.Commitment
+		}
+	}
+	t := len(pCommitment) - 1
+	res :=  pCommitment[t]
+	for t > 0 {
+		res = ScMulElement(toScalar(verifier), res)
+		var AddList []ed.Element
+		AddList = append(AddList, res)
+		AddList = append(AddList, pCommitment[t-1])
+		res = ed.AddElements(AddList)
+		t--
+	}
+	if reflect.DeepEqual(shareCommitment, res) {
+		return true
+	}
+	return false
 }
 
 // This generate a random scalar
 func RandomGenerator() ed.Scalar {
-	max := new(big.Int)
-	max.Exp(big.NewInt(2), big.NewInt(255), nil).Sub(max, big.NewInt(19))
-	res, err := rand.Int(rand.Reader, max)
+	res, err := rand.Int(rand.Reader, orderL)
 	if err != nil {
 		println("ERROR : Fail to generate random big int")
 	}
-	res.Mod(res, orderL)
 	out := make(ed.Scalar, 32)
 	copy(out, Reverse(res.Bytes()))
 	return out

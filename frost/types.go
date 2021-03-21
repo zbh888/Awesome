@@ -2,11 +2,13 @@ package frost
 
 import ed "gitlab.com/polychainlabs/threshold-ed25519/pkg"
 
+//Commitment should have a size of t
 type PublicCommitment struct {
 	Commitment []ed.Element
 	Index      uint32
 }
 
+//For simplicity value of a share is f_sender(receiver)
 type Share struct {
 	Receiver       uint32
 	Sender         uint32
