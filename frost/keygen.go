@@ -8,11 +8,15 @@ import (
 func generateChallenge() {
 }
 
-func KeyGen_send(index uint32, threshold uint32, NumPlayer uint32 , str string) (PublicCommitment, []Share) {
+func KeyGen_send(index, threshold, NumPlayer uint32, str string) (PublicCommitment, []Share) {
 
 	var secret ed.Scalar = RandomGenerator()
-//	var nounce ed.Scalar = RandomGenerator()
+	var nounce ed.Scalar = RandomGenerator()
+	var nounceCommitment ed.Element = ed.ScalarMultiplyBase(nounce)
+	var secretCommitment ed.Element = ed.ScalarMultiplyBase(secret)
 	//generate challenge
+	challenge := GenChallenge(index, str, secretCommitment,nounceCommitment)
+	u := AddScalars(nounce, MulScalars(secret, challenge))
 
 	var VecShare []Share
 	var PubCommitment []ed.Element
@@ -21,12 +25,11 @@ func KeyGen_send(index uint32, threshold uint32, NumPlayer uint32 , str string) 
 
 	// random generating coff
 	for players_index=1; players_index < threshold; players_index++  {
-
 		coefficients = append(coefficients, RandomGenerator())
 	}
 
 	// create commitment (commitment size would be t)
-	PubCommitment = append(PubCommitment, ed.ScalarMultiplyBase(secret))
+	PubCommitment = append(PubCommitment, secretCommitment)
 
 	for players_index=0; players_index < threshold -1; players_index++  {
 		PubCommitment = append(PubCommitment, ed.ScalarMultiplyBase(coefficients[players_index]))
