@@ -1,15 +1,15 @@
 package frost
 
 import (
+	"fmt"
 	ed "gitlab.com/polychainlabs/threshold-ed25519/pkg"
-	"reflect"
 )
 
 //return random big int, which 0 <= x <= prime - 1
 func generateChallenge() {
 }
 
-func KeyGen_send(index, threshold, NumPlayer uint32, str string) (PkgCommitment, []Share) {
+func KeyGen_send(index, threshold, NumPlayer uint32, str string) (PkgCommitment, []Share, Share) {
 
 	var secret ed.Scalar = RandomGenerator()
 	var nonce ed.Scalar = RandomGenerator()
@@ -20,19 +20,20 @@ func KeyGen_send(index, threshold, NumPlayer uint32, str string) (PkgCommitment,
 	u := AddScalars(nonce, MulScalars(secret, challenge))
 
 	var VecShare []Share
+	var ShareSaving Share
 	var PubCommitment []ed.Element
 	var coefficients []ed.Scalar
 	var playersIndex uint32
 
 	// random generating coff
-	for playersIndex =1; playersIndex < threshold; playersIndex++  {
+	for playersIndex = 1; playersIndex < threshold; playersIndex++  {
 		coefficients = append(coefficients, RandomGenerator())
 	}
 
 	// create commitment (commitment size would be t)
 	PubCommitment = append(PubCommitment, secretCommitment)
 
-	for playersIndex =0; playersIndex < threshold -1; playersIndex++  {
+	for playersIndex = 0; playersIndex < threshold -1; playersIndex++  {
 		PubCommitment = append(PubCommitment, ed.ScalarMultiplyBase(coefficients[playersIndex]))
 	}
 	Commitment := PublicCommitment {
@@ -40,10 +41,8 @@ func KeyGen_send(index, threshold, NumPlayer uint32, str string) (PkgCommitment,
 		index,
 	}
 
-	// generate share for other players (having t-1 shares in total)
+	// generate share for other players (having n-1 shares in total)
 	for playersIndex =1; playersIndex < NumPlayer+1; playersIndex++  {
-		if playersIndex != index {
-
 			var listForAdd []ed.Scalar
 			listForAdd = append(listForAdd, secret)
 			var i uint32
@@ -59,7 +58,10 @@ func KeyGen_send(index, threshold, NumPlayer uint32, str string) (PkgCommitment,
 				index,
 				value,
 			}
+		if playersIndex != index {
 			VecShare = append(VecShare, share)
+		} else {
+			ShareSaving = share
 		}
 	}
 	pkg := PkgCommitment{
@@ -69,10 +71,11 @@ func KeyGen_send(index, threshold, NumPlayer uint32, str string) (PkgCommitment,
 		PCommitment: Commitment,
 	}
 
-	return pkg, VecShare
+	return pkg, VecShare, ShareSaving
 }
+
 // Player verifies all commitments they receive, and return invalid player index and valid commitments
-func VerifyPkg(index uint32, pkg []PkgCommitment, str string) ([]uint32, []PublicCommitment ) {
+func VerifyPkg(pkg []PkgCommitment, str string) ([]uint32, []PublicCommitment ) {
 	var InvalidList []uint32
 	var ValidCommitment []PublicCommitment
 	//check each one
@@ -86,23 +89,46 @@ func VerifyPkg(index uint32, pkg []PkgCommitment, str string) ([]uint32, []Publi
 	return InvalidList, ValidCommitment
 }
 
-func isValid(pkg PkgCommitment, str string) bool {
-	if pkg.Index == pkg.PCommitment.Index {
-		sender := pkg.Index
-		secretCommitment := pkg.PCommitment.Commitment[0]
-		nonceCommitment := pkg.Nounce_R
-		challenge := GenChallenge(sender, str, secretCommitment, nonceCommitment)
-		z := BytesToBig(challenge)
-		z.Neg(z)
-		var negChallenge ed.Scalar = Reverse(z.Bytes())
-
-		var AddList []ed.Element
-		AddList = append(AddList, ed.ScalarMultiplyBase(pkg.Nounce_u))
-		AddList = append(AddList, ScMulElement(negChallenge, secretCommitment))
-		Rtest := ed.AddElements(AddList)
-		if reflect.DeepEqual(Rtest,nonceCommitment) {
-			return true
+func DistributeShares(sender, receiver uint32, shares []Share) Share {
+	for _, s := range shares {
+		fmt.Printf("Sender %d differs from sender %d, in shares", sender, s.Sender)
+		if sender != s.Sender {panic("DistributeShares")}
+	}
+	for _, s := range shares {
+		if receiver == s.Receiver {
+			return s
 		}
 	}
-	return  false
+	fmt.Printf("Didn't find corresponding share for %d in sender %d's shares\n", receiver, sender)
+	panic("DistributeShares")
+}
+//player 1 should have share f_2(1), f_3(1)..., f_n(1)
+func ReceiveAndGenKey(receiver uint32, ShareSaving Share,
+	AllCommitment []PublicCommitment, Shares []Share) Keys {
+	//checking length
+	if !VerifyShare(ShareSaving, receiver, AllCommitment) {
+		panic("Fail to verify")
+	}
+	for _, s := range Shares {
+		if !VerifyShare(s, receiver, AllCommitment) {
+			panic("Fail to verify")
+		}
+	}
+	var AddScalarList []ed.Scalar
+	AddScalarList = append(AddScalarList, ShareSaving.Value)
+	for _, s := range Shares {
+		AddScalarList = append(AddScalarList, s.Value)
+	}
+	secret := ed.AddScalars(AddScalarList)
+
+	var AddElementList []ed.Element
+	for _, c := range AllCommitment { //don't care about order
+		AddElementList = append(AddElementList, c.Commitment[0])
+	}
+	groupPK := ed.AddElements(AddElementList)
+
+	PK := ed.ScalarMultiplyBase(secret)
+
+	keys := Keys{receiver, secret,PK,groupPK}
+	return keys
 }

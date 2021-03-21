@@ -19,3 +19,10 @@ type PkgCommitment struct {
 	Nounce_u   ed.Scalar
 	PCommitment PublicCommitment
 }
+
+type Keys struct {
+	index uint32
+	secretKey ed.Scalar
+	publicKey ed.Element
+	groupPublicKey ed.Element
+}
