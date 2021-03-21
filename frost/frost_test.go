@@ -6,5 +6,8 @@ import (
 )
 
 func TestRunnable(t *testing.T) {
-	_, _ = frost.KeyGen_send(3, 4, 10, "123")
+	// require threshold >= 1
+	_, _ = frost.KeyGen_send(1, 1, 0, "123")
+	_, _ = frost.KeyGen_send(1, 1, 10, "123")
+	_, _ = frost.KeyGen_send(2, 12, 10, "123")
 }

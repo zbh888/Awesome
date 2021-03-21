@@ -3,6 +3,7 @@ package frost
 import (
 	"crypto/rand"
 	"crypto/sha256"
+	"gitlab.com/polychainlabs/edwards25519"
 	ed "gitlab.com/polychainlabs/threshold-ed25519/pkg"
 	"math/big"
 )
@@ -65,25 +66,24 @@ func AddScalars(scalar1 ed.Scalar, scalar2 ed.Scalar) ed.Scalar {
 	return out
 }
 
+func ScMulElement(scalarE ed.Scalar, E ed.Element) ed.Element {
+	var reduced [32]byte
+	var orig [64]byte
+	copy(orig[:], scalarE)
+	edwards25519.ScReduce(&reduced, &orig)
 
-//Reference
+	var A edwards25519.ExtendedGroupElement
+	var ge edwards25519.ExtendedGroupElement
 
-//Source : https://gitlab.com/polychainlabs/threshold-ed25519
-func Reverse(src []byte) []byte {
-	dst := make([]byte, len(src))
-	copy(dst, src)
-	for i := len(dst)/2 - 1; i >= 0; i-- {
-		opp := len(dst) - 1 - i
-		dst[i], dst[opp] = dst[opp], dst[i]
-	}
+	var publicKeyBytesE [32]byte
+	copy(publicKeyBytesE[:], E)
+	ge.FromBytes(&publicKeyBytesE)
+	ScalarMult(&A, &reduced, &ge)
 
-	return dst
+	var publicKeyBytes [32]byte
+	A.ToBytes(&publicKeyBytes)
+
+	element := make(ed.Element, 32)
+	copy(element, publicKeyBytes[:])
+	return element
 }
-
-func BytesToBig(bytes []byte) *big.Int {
-	var result big.Int
-	result.SetBytes(Reverse(bytes))
-	return &result
-}
-
-var orderL = new(big.Int).SetBits([]big.Word{0x5812631a5cf5d3ed, 0x14def9dea2f79cd6, 0, 0x1000000000000000})

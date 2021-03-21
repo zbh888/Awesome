@@ -12,3 +12,10 @@ type Share struct {
 	Sender         uint32
 	Value          ed.Scalar
 }
+
+type PkgCommitment struct {
+	Index      uint32
+	Nounce_R   ed.Element
+	Nounce_u   ed.Scalar
+	PCommitment PublicCommitment
+}
