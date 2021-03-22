@@ -143,3 +143,37 @@ func ScMulElement(scalarE ed.Scalar, E ed.Element) ed.Element {
 	copy(element, publicKeyBytes[:])
 	return element
 }
+
+
+func IsInG(element ed.Element) bool {
+	var ge edwards25519.ExtendedGroupElement
+	var publicKeyBytesE [32]byte
+	copy(publicKeyBytesE[:], element)
+	return ge.FromBytes(&publicKeyBytesE)
+}
+
+func SignGenRoh(index uint32, message string, B []PairOfNonceCommitments) ed.Scalar {
+	var res []byte
+	res = append(ToScalar(index), []byte(message)...)
+	for _, pair := range B {
+		res = append(res, pair.Nonce_D...)
+		res = append(res, pair.Nonce_E...)
+	}
+	res = append(res, []byte("nonce")...) //??? Distinguish from H1?
+	sum := sha256.Sum256(res)
+	big_num := BytesToBig(sum[:])
+	big_num.Mod(big_num, orderL)
+	res = Reverse(big_num.Bytes())
+	return res
+}
+
+func SignGenChallenge(R ed.Element, Y ed.Element ,message string) ed.Scalar {
+	var res []byte
+	res = append(R, Y...)
+	res = append(res, []byte(message)...)
+	sum := sha256.Sum256(res)
+	big_num := BytesToBig(sum[:])
+	big_num.Mod(big_num, orderL)
+	res = Reverse(big_num.Bytes())
+	return res
+}
