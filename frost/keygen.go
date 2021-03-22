@@ -5,10 +5,6 @@ import (
 	ed "gitlab.com/polychainlabs/threshold-ed25519/pkg"
 )
 
-//return random big int, which 0 <= x <= prime - 1
-func generateChallenge() {
-}
-
 func KeyGen_send(index, threshold, NumPlayer uint32, str string) (PkgCommitment, []Share, Share) {
 
 	var secret ed.Scalar = RandomGenerator()
@@ -47,7 +43,7 @@ func KeyGen_send(index, threshold, NumPlayer uint32, str string) (PkgCommitment,
 			listForAdd = append(listForAdd, secret)
 			var i uint32
 			for i = 0; i < threshold-1; i++ { //suppose i is the power_index of `player_index`
-				var powIndex = ExpScalars(toScalar(playersIndex), toScalar(i+1)) // player_index^i
+				var powIndex = ExpScalars(ToScalar(playersIndex), ToScalar(i+1)) // player_index^i
 				val := MulScalars(powIndex, coefficients[i])
 				listForAdd = append(listForAdd, val)
 			}

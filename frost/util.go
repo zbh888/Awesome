@@ -3,6 +3,7 @@ package frost
 import (
 	"crypto/rand"
 	"crypto/sha256"
+	"fmt"
 	"gitlab.com/polychainlabs/edwards25519"
 	ed "gitlab.com/polychainlabs/threshold-ed25519/pkg"
 	"math/big"
@@ -11,7 +12,7 @@ import (
 // This generate a chanllenge
 func GenChallenge(index uint32, str string, secretCommitment ed.Element, nounceCommitment ed.Element) ed.Scalar {
 	var res []byte
-	res = append(toScalar(index), []byte(str)...)
+	res = append(ToScalar(index), []byte(str)...)
 	res = append(res, secretCommitment...)
 	res = append(res, nounceCommitment...)
 	sum := sha256.Sum256(res)
@@ -29,8 +30,8 @@ func isValid(pkg PkgCommitment, str string) bool {
 		challenge := GenChallenge(sender, str, secretCommitment, nonceCommitment)
 		z := BytesToBig(challenge)
 		z.Neg(z)
-		var negChallenge ed.Scalar = Reverse(z.Bytes())
-
+		z.Mod(z,orderL)
+	    var negChallenge ed.Scalar = Reverse(z.Bytes())
 		var AddList []ed.Element
 		AddList = append(AddList, ed.ScalarMultiplyBase(pkg.Nounce_u))
 		AddList = append(AddList, ScMulElement(negChallenge, secretCommitment))
@@ -38,6 +39,13 @@ func isValid(pkg PkgCommitment, str string) bool {
 		if reflect.DeepEqual(Rtest,nonceCommitment) {
 			return true
 		}
+		str:=string(Rtest)
+		fmt.Print(str+"\n")
+		str2:=string(nonceCommitment)
+		fmt.Print(str2+"\n")
+		fmt.Println("cut")
+	} else {
+		panic("Unexpected")
 	}
 	return  false
 }
@@ -55,7 +63,7 @@ func VerifyShare(share Share, receiver uint32, AllCommitment []PublicCommitment)
 	t := len(pCommitment) - 1
 	res :=  pCommitment[t]
 	for t > 0 {
-		res = ScMulElement(toScalar(verifier), res)
+		res = ScMulElement(ToScalar(verifier), res)
 		var AddList []ed.Element
 		AddList = append(AddList, res)
 		AddList = append(AddList, pCommitment[t-1])
@@ -80,7 +88,7 @@ func RandomGenerator() ed.Scalar {
 }
 
 // this convert uint32 to scalar
-func toScalar(index uint32) ed.Scalar {
+func ToScalar(index uint32) ed.Scalar {
 	out := make(ed.Scalar, 32)
 	num := big.NewInt(int64(index)).Bytes()
 	copy(out, Reverse(num))
