@@ -11,7 +11,7 @@ func PreProcess(index uint32, numSigns int) (PairOfNonceCommitmentsList, []TwoPa
 		e := RandomGenerator()
 		D := ed.ScalarMultiplyBase(d)
 		E := ed.ScalarMultiplyBase(e)
-		PairCommitments := PairOfNonceCommitments{D,E}
+		PairCommitments := PairOfNonceCommitments{index,D,E}
 		StoringCommitments := TwoPairOfNonceCommitmentAndNonce{d,D,e,E}
 		L = append(L, PairCommitments)
 		Save = append(Save, StoringCommitments)
@@ -19,3 +19,5 @@ func PreProcess(index uint32, numSigns int) (PairOfNonceCommitmentsList, []TwoPa
 	List := PairOfNonceCommitmentsList{index, L}
 	return List, Save
 }
+
+

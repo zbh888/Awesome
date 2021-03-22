@@ -24,16 +24,16 @@ type PkgCommitment struct {
 }
 //We only need this as the final keys
 type Keys struct {
-	index uint32
-	secretKey ed.Scalar
-	publicKey ed.Element
-	groupPublicKey ed.Element
+	Index uint32
+	SecretKey ed.Scalar
+	PublicKey ed.Element
+	GroupPublicKey ed.Element
 }
 
 // Here with processing type
 
-//
 type PairOfNonceCommitments struct {
+	Index uint32
 	Nonce_D ed.Element
 	Nonce_E ed.Element
 }
@@ -47,7 +47,17 @@ type TwoPairOfNonceCommitmentAndNonce struct {
 
 //This is for public use
 type PairOfNonceCommitmentsList struct {
-	index uint32
+	Index uint32
 	List []PairOfNonceCommitments
 }
 
+//Here with sign type
+type Response struct {
+	index uint32
+	value ed.Scalar
+}
+
+type Signature struct {
+	R ed.Element
+	z ed.Scalar
+}
