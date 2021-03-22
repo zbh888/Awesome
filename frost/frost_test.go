@@ -34,4 +34,9 @@ func Test1_Simple(t *testing.T) {
 	_ = frost.ReceiveAndGenKey(1,save1,AllCommitment,shares_to1)
 	_ = frost.ReceiveAndGenKey(2,save2,AllCommitment,shares_to2)
 	_ = frost.ReceiveAndGenKey(3,save3,AllCommitment,shares_to3)
+	//Say we sign 2 messages
+	_,_ = frost.PreProcess(1,2)
+	_,_ = frost.PreProcess(2,2)
+	_,_ = frost.PreProcess(3,2)
+
 }

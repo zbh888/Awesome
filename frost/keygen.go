@@ -87,8 +87,10 @@ func VerifyPkg(pkg []PkgCommitment, str string) ([]uint32, []PublicCommitment ) 
 
 func DistributeShares(sender, receiver uint32, shares []Share) Share {
 	for _, s := range shares {
-		fmt.Printf("Sender %d differs from sender %d, in shares", sender, s.Sender)
-		if sender != s.Sender {panic("DistributeShares")}
+		if sender != s.Sender {
+			fmt.Printf("Sender %d differs from sender %d, in shares", sender, s.Sender)
+			panic("DistributeShares")
+		}
 	}
 	for _, s := range shares {
 		if receiver == s.Receiver {
