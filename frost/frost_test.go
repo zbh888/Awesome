@@ -38,5 +38,4 @@ func Test1_Simple(t *testing.T) {
 	_,_ = frost.PreProcess(1,2)
 	_,_ = frost.PreProcess(2,2)
 	_,_ = frost.PreProcess(3,2)
-
 }
