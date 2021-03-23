@@ -102,7 +102,7 @@ func DistributeShares(sender, receiver uint32, shares []Share) Share {
 }
 //player 1 should have share f_2(1), f_3(1)..., f_n(1)
 func ReceiveAndGenKey(receiver uint32, ShareSaving Share,
-	AllCommitment []PublicCommitment, Shares []Share) Keys {
+	AllCommitment []PublicCommitment, Shares []Share) (Keys, PublicKeys) {
 	//checking length
 	if !VerifyShare(ShareSaving, receiver, AllCommitment) {
 		panic("Fail to verify")
@@ -128,5 +128,6 @@ func ReceiveAndGenKey(receiver uint32, ShareSaving Share,
 	PK := ed.ScalarMultiplyBase(secret)
 
 	keys := Keys{receiver, secret,PK,groupPK}
-	return keys
+	p_keys := PublicKeys{receiver,PK,groupPK}
+	return keys, p_keys
 }

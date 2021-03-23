@@ -30,6 +30,12 @@ type Keys struct {
 	GroupPublicKey ed.Element
 }
 
+type PublicKeys struct {
+	Index uint32
+	PublicKey ed.Element
+	GroupPublicKey ed.Element
+}
+
 // Here with processing type
 
 type PairOfNonceCommitments struct {

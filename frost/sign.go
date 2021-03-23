@@ -2,6 +2,7 @@ package frost
 
 import (
 	ed "gitlab.com/polychainlabs/threshold-ed25519/pkg"
+	"reflect"
 )
 
 //SA fetched the available Commitments from the server, server will handle
@@ -52,7 +53,48 @@ func Sign(index uint32, message string, B []PairOfNonceCommitments,
 	return Response{index, r}
 }
 
-func SA_GenerateSignature(message string, B []PairOfNonceCommitments, responses []Response) Signature {
-	var sig Signature
-	return sig
+// Assume Pks are all members of S
+func SA_GenerateSignature(Group_PK ed.Element, message string,
+	B []PairOfNonceCommitments, responses []Response, Pks []PublicKeys) (Signature, []uint32) {
+	var Users []uint32
+	var InvalidUsers []uint32
+	var ResponseAddList []ed.Scalar
+	Map_forResponse := make(map[uint32]ed.Scalar) //make a map for efficiency
+	Map_forPk := make(map[uint32]ed.Element) //make a map for efficiency
+	Map_forR_i := make(map[uint32]ed.Element) //make a map for efficiency
+	for _, response := range responses {
+		Map_forResponse[response.index] = response.value
+	}
+	for _, Pk := range Pks {
+		Map_forPk[Pk.Index] = Pk.PublicKey
+		Users = append(Users, Pk.Index)
+	}
+
+	var Signature_AddList []ed.Element
+	for _, pair := range B {
+		Rho := SignGenRoh(pair.Index, message,B)
+		R_AddList := []ed.Element{pair.Nonce_D, ScMulElement(Rho, pair.Nonce_E)}
+		R_i := ed.AddElements(R_AddList)
+		Map_forR_i[pair.Index] = R_i
+		Signature_AddList = append(Signature_AddList, R_i)
+	}
+	R := ed.AddElements(Signature_AddList)
+	Challenge := SignGenChallenge(R, Group_PK, message)
+	for _, index := range Users {
+		CommitWithResponse := ed.ScalarMultiplyBase(Map_forResponse[index])
+		left := Map_forR_i[index]
+		right := ScMulElement(MulScalars(Challenge, SignGenLagrangeCoefficient(index, Users)), Map_forPk[index])
+		TestValue := ed.AddElements([]ed.Element{left, right})
+		if !reflect.DeepEqual(CommitWithResponse, TestValue) {
+			InvalidUsers = append(InvalidUsers, index)
+		}
+	}
+	if(len(InvalidUsers) != 0) {
+		panic("No")
+	}
+	for _, index := range Users {
+		ResponseAddList = append(ResponseAddList, Map_forResponse[index])
+	}
+	sig := Signature{R, ed.AddScalars(ResponseAddList)}
+	return sig, InvalidUsers
 }
