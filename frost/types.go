@@ -65,5 +65,5 @@ type Response struct {
 
 type Signature struct {
 	R ed.Element
-	z ed.Scalar
+	Z ed.Scalar
 }

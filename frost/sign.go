@@ -8,6 +8,7 @@ import (
 //SA fetched the available Commitments from the server, server will handle
 //the removing of Commitment and provide the correct PairOfCommitment, so SA should not care about it
 func SA_GenerateB(S []uint32, message string ,AllCommitments []PairOfNonceCommitments) ([]PairOfNonceCommitments, string) {
+
 	var B []PairOfNonceCommitments
 	m := make(map[uint32]PairOfNonceCommitments) //make a map for efficiency
 	for _, C := range AllCommitments {
@@ -22,6 +23,7 @@ func SA_GenerateB(S []uint32, message string ,AllCommitments []PairOfNonceCommit
 //using reference for deleting the corresponding saving share commitment
 func Sign(index uint32, message string, B []PairOfNonceCommitments,
 	save *[]TwoPairOfNonceCommitmentAndNonce, keys Keys) Response {
+
 	Map_forPair := make(map[uint32]PairOfNonceCommitments) //make a map for efficiency
 	Map_forRoh := make(map[uint32]ed.Scalar) //make a map for efficiency
 	var S []uint32
@@ -56,6 +58,7 @@ func Sign(index uint32, message string, B []PairOfNonceCommitments,
 // Assume Pks are all members of S
 func SA_GenerateSignature(Group_PK ed.Element, message string,
 	B []PairOfNonceCommitments, responses []Response, Pks []PublicKeys) (Signature, []uint32) {
+
 	var Users []uint32
 	var InvalidUsers []uint32
 	var ResponseAddList []ed.Scalar
@@ -89,7 +92,7 @@ func SA_GenerateSignature(Group_PK ed.Element, message string,
 			InvalidUsers = append(InvalidUsers, index)
 		}
 	}
-	if(len(InvalidUsers) != 0) {
+	if len(InvalidUsers) != 0 {
 		panic("No")
 	}
 	for _, index := range Users {

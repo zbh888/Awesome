@@ -1,7 +1,10 @@
 package frost_test
 
 import (
+	"fmt"
 	"github/zbh888/awsome/frost"
+	ed "gitlab.com/polychainlabs/threshold-ed25519/pkg"
+	"reflect"
 	"testing"
 )
 
@@ -31,11 +34,40 @@ func Test1_Simple(t *testing.T) {
 		frost.DistributeShares(2,3, shares2),
 	}
 	//generate keys without panic
-	_,_ = frost.ReceiveAndGenKey(1,save1,AllCommitment,shares_to1)
-	_,_ = frost.ReceiveAndGenKey(2,save2,AllCommitment,shares_to2)
-	_,_ = frost.ReceiveAndGenKey(3,save3,AllCommitment,shares_to3)
+	Sk1, Pk1 := frost.ReceiveAndGenKey(1,save1,AllCommitment,shares_to1)
+	Sk2, Pk2 := frost.ReceiveAndGenKey(2,save2,AllCommitment,shares_to2)
+	_, _ = frost.ReceiveAndGenKey(2,save2,AllCommitment,shares_to2)
+	_, _= frost.ReceiveAndGenKey(3,save3,AllCommitment,shares_to3)
 	//Say we sign 2 messages
-	_,_ = frost.PreProcess(1,2)
-	_,_ = frost.PreProcess(2,2)
-	_,_ = frost.PreProcess(3,2)
+	ListNonceCommits1, Save1 := frost.PreProcess(1,2)
+	ListNonceCommits2, Save2 := frost.PreProcess(2,2)
+	_, _= frost.PreProcess(3,2)
+	//Choose SA, S = {1, 2}
+	//Server returns the Available nonce commitments
+	S := []uint32{1,2}
+	AllNonceCommitments := []frost.PairOfNonceCommitments{
+		ListNonceCommits1.List[len(ListNonceCommits1.List)-1],
+		ListNonceCommits2.List[len(ListNonceCommits2.List)-1],
+	}
+	B, message := frost.SA_GenerateB(S, "Awesome",AllNonceCommitments)
+	if message!="Awesome" {t.Error("Not matching Awesome")}
+
+	response1 := frost.Sign(1,"Awesome", B, &Save1, Sk1)
+	response2 := frost.Sign(2,"Awesome", B, &Save2, Sk2)
+
+	//GroupPublic
+	GroupPublicKey := Sk1.GroupPublicKey
+
+	Signature, InvalidUsers :=frost.SA_GenerateSignature(GroupPublicKey,"Awesome",B,
+		[]frost.Response{response1,response2},
+		[]frost.PublicKeys{Pk1, Pk2},
+		)
+	fmt.Println(InvalidUsers)
+
+	Challenge := frost.SignGenChallenge(Signature.R, GroupPublicKey, "Awesome")
+	R_test := ed.AddElements([]ed.Element{ed.ScalarMultiplyBase(Signature.Z),
+		frost.ScMulElement(frost.ScalarNeg(Challenge), GroupPublicKey)})
+	if !reflect.DeepEqual(R_test, Signature.R) {
+		t.Error("Fail to verify")
+	}
 }
