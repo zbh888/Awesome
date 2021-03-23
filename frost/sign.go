@@ -40,10 +40,16 @@ func Sign(index uint32, message string, B []PairOfNonceCommitments,
 	GroupCommit := ed.AddElements(ListElementForAddition)
 	Challenge := SignGenChallenge(GroupCommit, keys.GroupPublicKey,message)
 
-	var LagRangeCoeffient ed.Scalar
+	var LagrangeCoefficient ed.Scalar = SignGenLagrangeCoefficient(index, S)
 
-	r := Response{1,ToScalar(1)}
-	return r
+	//This block is just for r = d+(e*p)+lambda*s*c
+	Intermediate := MulScalars(MulScalars(LagrangeCoefficient, keys.SecretKey), Challenge) //lambda*s*c
+	d := (*save)[len(*save)-1].Nounce_d
+	e := (*save)[len(*save)-1].Nonce_e
+	r := AddScalars(AddScalars(d, MulScalars(e, Map_forRoh[index])), Intermediate)
+
+	*save = (*save)[:len(*save) - 1]
+	return Response{index, r}
 }
 
 func SA_GenerateSignature(message string, B []PairOfNonceCommitments, responses []Response) Signature {

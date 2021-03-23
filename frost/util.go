@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"gitlab.com/polychainlabs/edwards25519"
+	FiloEd "filippo.io/edwards25519"
 	ed "gitlab.com/polychainlabs/threshold-ed25519/pkg"
 	"math/big"
 	"reflect"
@@ -28,10 +29,8 @@ func isValid(pkg PkgCommitment, str string) bool {
 		secretCommitment := pkg.PCommitment.Commitment[0]
 		nonceCommitment := pkg.Nounce_R
 		challenge := GenChallenge(sender, str, secretCommitment, nonceCommitment)
-		z := BytesToBig(challenge)
-		z.Neg(z)
-		z.Mod(z,orderL)
-	    var negChallenge ed.Scalar = Reverse(z.Bytes())
+		negChallenge := ScalarNeg(challenge)
+
 		var AddList []ed.Element
 		AddList = append(AddList, ed.ScalarMultiplyBase(pkg.Nounce_u))
 		AddList = append(AddList, ScMulElement(negChallenge, secretCommitment))
@@ -111,7 +110,7 @@ func MulScalars(scalar1 ed.Scalar, scalar2 ed.Scalar) ed.Scalar {
 	copy(out, Reverse(result.Bytes()))
 	return out
 }
-//scaler1 + scalar2 mod orderL
+//scalar1 + scalar2 mod orderL
 func AddScalars(scalar1 ed.Scalar, scalar2 ed.Scalar) ed.Scalar {
 	var result big.Int
 	result.Add(BytesToBig(scalar1), BytesToBig(scalar2))
@@ -143,7 +142,23 @@ func ScMulElement(scalarE ed.Scalar, E ed.Element) ed.Element {
 	copy(element, publicKeyBytes[:])
 	return element
 }
+func ScalarNeg(s ed.Scalar) ed.Scalar  {
+	z := BytesToBig(s)
+	z.Neg(z)
+	z.Mod(z,orderL)
+	return Reverse(z.Bytes())
 
+}
+// used filippo.io/edwards25519
+func ScInverse(scalar ed.Scalar) ed.Scalar {
+	s := new(FiloEd.Scalar)
+	s, err := s.SetCanonicalBytes(scalar)
+	if s == nil {
+		fmt.Println(err)
+		panic("Fail to set canonical byte")
+	}
+	return s.Bytes()
+}
 
 func IsInG(element ed.Element) bool {
 	var ge edwards25519.ExtendedGroupElement
@@ -165,6 +180,18 @@ func SignGenRoh(index uint32, message string, B []PairOfNonceCommitments) ed.Sca
 	big_num.Mod(big_num, orderL)
 	res = Reverse(big_num.Bytes())
 	return res
+}
+
+func SignGenLagrangeCoefficient(signer uint32, S []uint32) ed.Scalar {
+	nominator := ToScalar(1)
+	denominator := ToScalar(1)
+	for _, s := range S {
+		if s != signer {
+			nominator = MulScalars(nominator, ToScalar(s))
+			denominator = MulScalars(denominator, AddScalars(ToScalar(s), ScalarNeg(ToScalar(signer))))
+		}
+	}
+	return  MulScalars(nominator,ScInverse(denominator)) //Inverse will panic if denominator is 0
 }
 
 func SignGenChallenge(R ed.Element, Y ed.Element ,message string) ed.Scalar {
