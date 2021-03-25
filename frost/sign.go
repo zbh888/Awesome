@@ -1,8 +1,8 @@
 package frost
 
 import (
+	"crypto/subtle"
 	ed "gitlab.com/polychainlabs/threshold-ed25519/pkg"
-	"reflect"
 )
 
 //SA fetched the available Commitments from the server, server will handle
@@ -88,7 +88,7 @@ func SA_GenerateSignature(Group_PK ed.Element, message string,
 		left := Map_forR_i[index]
 		right := ScMulElement(MulScalars(Challenge, SignGenLagrangeCoefficient(index, Users)), Map_forPk[index])
 		TestValue := ed.AddElements([]ed.Element{left, right})
-		if !reflect.DeepEqual(CommitWithResponse, TestValue) {
+		if !(subtle.ConstantTimeCompare(CommitWithResponse, TestValue) == 1) {
 			InvalidUsers = append(InvalidUsers, index)
 		}
 	}

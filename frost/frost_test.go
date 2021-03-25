@@ -1,10 +1,10 @@
 package frost_test
 
 import (
+	"crypto/subtle"
 	"fmt"
 	"github/zbh888/awsome/frost"
 	ed "gitlab.com/polychainlabs/threshold-ed25519/pkg"
-	"reflect"
 	"testing"
 )
 
@@ -67,7 +67,7 @@ func Test1_Simple(t *testing.T) {
 	Challenge := frost.SignGenChallenge(Signature.R, GroupPublicKey, "Awesome")
 	R_test := ed.AddElements([]ed.Element{ed.ScalarMultiplyBase(Signature.Z),
 		frost.ScMulElement(frost.ScalarNeg(Challenge), GroupPublicKey)})
-	if !reflect.DeepEqual(R_test, Signature.R) {
+	if !(subtle.ConstantTimeCompare(R_test, Signature.R) == 1){
 		t.Error("Fail to verify")
 	}
 }

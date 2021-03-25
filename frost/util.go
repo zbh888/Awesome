@@ -3,12 +3,12 @@ package frost
 import (
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/subtle"
+	FiloEd "filippo.io/edwards25519"
 	"fmt"
 	"gitlab.com/polychainlabs/edwards25519"
-	FiloEd "filippo.io/edwards25519"
 	ed "gitlab.com/polychainlabs/threshold-ed25519/pkg"
 	"math/big"
-	"reflect"
 )
 // This generate a chanllenge
 func GenChallenge(index uint32, str string, secretCommitment ed.Element, nounceCommitment ed.Element) ed.Scalar {
@@ -35,7 +35,7 @@ func isValid(pkg PkgCommitment, str string) bool {
 		AddList = append(AddList, ed.ScalarMultiplyBase(pkg.Nounce_u))
 		AddList = append(AddList, ScMulElement(negChallenge, secretCommitment))
 		Rtest := ed.AddElements(AddList)
-		if reflect.DeepEqual(Rtest,nonceCommitment) {
+		if subtle.ConstantTimeCompare(Rtest,nonceCommitment) == 1 {
 			return true
 		}
 		str:=string(Rtest)
@@ -69,7 +69,7 @@ func VerifyShare(share Share, receiver uint32, AllCommitment []PublicCommitment)
 		res = ed.AddElements(AddList)
 		t--
 	}
-	if reflect.DeepEqual(shareCommitment, res) {
+	if subtle.ConstantTimeCompare(shareCommitment, res) == 1  {
 		return true
 	}
 	return false
