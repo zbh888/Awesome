@@ -68,13 +68,13 @@ func SA_GenerateSignature(Group_PK ed.Element, message string, B []PairOfNonceCo
 I changed some code to enhance the security of my code based on this
 #### Source : https://github.com/veorq/cryptocoding
 
-### 1. Time of comparison between bytes vulnerability
+### 1. Time of comparison between bytes vulnerability (Yes)
 
 #### Originally
 
 I used `reflect.DeepEqual(a,b)` to compare points on the curve (32 bytes array)
 
-####Problem
+#### Problem
 ```go
 //Source: https://golang.org/src/reflect/deepequal.go
 case Array:
@@ -87,13 +87,58 @@ case Array:
 We can see it didn't use constant time for comparison, so attacker could possibly use this timing information for
 different bytes array to learn the correctness of his/her bytes array during the process of forging a signature.
 
-####Solution:
+Also note that compilers has freedom to change assembly execution to optimize code, so we should be careful. 
+
+#### Solution:
 Use `ConstantTimeCompare(a,b) == 1` to achieve time equality. (from `crypto/subtle`)
 
-###2.
+### 2. Time of branching on secret data vulnerability (No)
 
+#### Analysis
 
+Consider what are secret data in this protocol? 
 
+##### When `generating keys` : 
+
+The secret coefficient and the secret share should be kept secret. 
+
+In function `VerifyPkg(package)`, attacker could change the content of package. However, it is not a vulnerability since
+package contains public commitments and nonce commitment and it verifies in constant time.
+
+In function `ReceiveAndGenKey(shares)`, attacker could change the shares to test the program, if they succeed, secret share would be exposed.
+```go
+    if !VerifyShare(ShareSaving, AllCommitment) { //verify its own share
+		panic("Fail to verify")
+	}
+	for _, s := range Shares {
+		if !VerifyShare(s,  AllCommitment) { //verify shares it received
+			panic("Fail to verify")
+		}
+	}
+```
+When receiving the key, the receiver should verify the shares, in this process, function abort immediately 
+when it founds an invalid share. However, the `VerifyShare` takes constant time, thus, if a good statistician tries to perform the analysis
+by changing some bits of the share, then all data he receives would be constant.
+
+Anyway, Making the whole procedure constant time is not really hard, but makes no sense in this case.
+
+##### When `Signing` 
+
+No, there is no branching related to the keys. They just sign.
+
+### 3. Avoid table look-ups indexed by secret data (No)
+
+There is a discussion on https://crypto.stackexchange.com/questions/53528/why-dont-table-lookups-run-in-constant-time
+
+Seems like it caused by CPU optimization Cache-missed. 
+
+AES lookup table has this concern since its S-box indexing is really some secret, and it could be analyzed using statistic method.
+
+The main concern is we should not use secret data as index, which really didn't happen in this algorithm, since the participant's index is not a secret.
+
+But this is an interesting stuff to keep in mind. (I don't know if CUDA could help here, but I doubt it since it seems also facing Cache-missed problem)
+
+### 4. Avoid secret-dependent loop bounds
 
 ## Reference
 

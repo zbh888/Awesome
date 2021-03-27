@@ -104,11 +104,11 @@ func DistributeShares(sender, receiver uint32, shares []Share) Share {
 func ReceiveAndGenKey(receiver uint32, ShareSaving Share,
 	AllCommitment []PublicCommitment, Shares []Share) (Keys, PublicKeys) {
 	//checking length
-	if !VerifyShare(ShareSaving, receiver, AllCommitment) {
+	if !VerifyShare(ShareSaving, AllCommitment) {
 		panic("Fail to verify")
 	}
 	for _, s := range Shares {
-		if !VerifyShare(s, receiver, AllCommitment) {
+		if !VerifyShare(s,  AllCommitment) {
 			panic("Fail to verify")
 		}
 	}

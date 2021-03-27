@@ -30,7 +30,6 @@ func isValid(pkg PkgCommitment, str string) bool {
 		nonceCommitment := pkg.Nounce_R
 		challenge := GenChallenge(sender, str, secretCommitment, nonceCommitment)
 		negChallenge := ScalarNeg(challenge)
-
 		var AddList []ed.Element
 		AddList = append(AddList, ed.ScalarMultiplyBase(pkg.Nounce_u))
 		AddList = append(AddList, ScMulElement(negChallenge, secretCommitment))
@@ -38,18 +37,13 @@ func isValid(pkg PkgCommitment, str string) bool {
 		if subtle.ConstantTimeCompare(Rtest,nonceCommitment) == 1 {
 			return true
 		}
-		str:=string(Rtest)
-		fmt.Print(str+"\n")
-		str2:=string(nonceCommitment)
-		fmt.Print(str2+"\n")
-		fmt.Println("cut")
 	} else {
 		panic("Unexpected")
 	}
 	return  false
 }
 
-func VerifyShare(share Share, receiver uint32, AllCommitment []PublicCommitment) bool {
+func VerifyShare(share Share, AllCommitment []PublicCommitment) bool {
 	sender := share.Sender
 	verifier := share.Receiver
 	shareCommitment := ed.ScalarMultiplyBase(share.Value)
