@@ -128,7 +128,7 @@ No, there is no branching related to the keys. They just sign.
 
 ### 3. Avoid table look-ups indexed by secret data (No)
 
-There is a discussion on https://crypto.stackexchange.com/questions/53528/why-dont-table-lookups-run-in-constant-time
+There is a discussion on [StackExchange](https://crypto.stackexchange.com/questions/53528/why-dont-table-lookups-run-in-constant-time)
 
 Seems like it caused by CPU optimization Cache-missed. 
 
@@ -138,7 +138,20 @@ The main concern is we should not use secret data as index, which really didn't 
 
 But this is an interesting stuff to keep in mind. (I don't know if CUDA could help here, but I doubt it since it seems also facing Cache-missed problem)
 
-### 4. Avoid secret-dependent loop bounds
+### 4. Avoid secret-dependent loop bounds (No)
+
+We don't use secret for bounds in a loop for this implementation.
+
+But we should be careful that if the user controls the input of a function, which is pretty common since everyone has some sort of secret, then 
+the bound of a loop should be constant or non-secret variable based.
+
+Also note that we should always take good care of `Buffer overflow` problem (The Heartbleed Bug). Although Golang usually [checks bounds](https://golang.org/ref/spec#Index_expressions) for most of the usage.
+But there might be issue with package [unsafe](https://golang.org/pkg/unsafe/), which has a description of usage on [this site](https://medium.com/a-journey-with-go/go-what-is-the-unsafe-package-d2443da36350).
+It could increse the efficiency of the program, and it is in use for allowing converting pointer type (Not allowed without unsafe package).
+
+Aside: [Exploitation Exercise with unsafe.Pointer in Go](https://dev.to/jlauinger/exploitation-exercise-with-unsafe-pointer-in-go-information-leak-part-1-1kga)
+
+### 5. Prevent compiler interference with security-critical operations
 
 ## Reference
 
