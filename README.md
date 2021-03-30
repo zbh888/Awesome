@@ -151,7 +151,56 @@ It could increse the efficiency of the program, and it is in use for allowing co
 
 Aside: [Exploitation Exercise with unsafe.Pointer in Go](https://dev.to/jlauinger/exploitation-exercise-with-unsafe-pointer-in-go-information-leak-part-1-1kga)
 
-### 5. Prevent compiler interference with security-critical operations
+### 5. Prevent compiler interference with security-critical operations (Don't know)
+
+When we want to delete some secret data on a computer, one way to do this is to overwrite the memory.
+The [article](https://www.viva64.com/en/b/0178/) written by Andrey Karpov tells that. When trying to use `memset` in C to fill in zero to a block of memory,
+the compiler could simply ignore it since this block of data won't be used anyway. As consequences, the secret data remains in the memory. One "might" steal the data 
+by using buffer overflow.
+
+(He also suggests using static code analyzers to detect potential errors)
+
+**In the implementation**, the user potentially need to delete two things:
+
+**a. Each user deletes the shares received from other.** 
+
+(not reflected in function usage, we just assume the users delete them on their own if they are honest players)
+
+**b. Consume one nonce pair from the preprocessed results after use.**
+
+This was implemented by passing a pointer to an array, and remove the last element by
+```go
+*save = (*save)[:len(*save) - 1]
+````
+I doubt it would be a threat since Golang is not vulnerable towards buffer overflow. (without using `unsafe`)
+
+#### Possible Solution:
+1. look at the assembly code for the part involving security-critical code block
+
+2. A function could be redefined as a `volatile` pointer, which prevents optimization from the compiler
+```C
+void * (*volatile memset_volatile)(void *, int, size_t) = memset
+```
+
+3. C11 introduced `memset_s`
+
+4. Static code analyzers (Straight forward, I found a Plugin named as `Snyk`)
+
+#### Static code analyzers result:
+
+### 6. Prevent confusion between secure and insecure APIs
+
+Security issue may be carried out when we call insecure API. 
+Insecure API always has very similar functionality to the secure API, they may be implemented for optimization.
+Some examples would be random number generator, and memory operations.
+
+#### Possible Solution
+
+1. change to the secure one, obviously
+
+2. if we can't remove, wrap it with a secure function
+
+
 
 ## Reference
 
