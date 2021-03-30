@@ -200,6 +200,26 @@ Some examples would be random number generator, and memory operations.
 
 2. if we can't remove, wrap it with a secure function
 
+Example: Random
+
+[Here](https://golang.org/src/crypto/rand/util.go?s=3070:3132#L96) we have the implementation of `crypto/rand`
+, and [here](https://golang.org/pkg/math/rand/#Int) is the `Math/rand`
+
+In this [tutorial](https://zetcode.com/golang/random/), it demonstrated the usages well.
+
+But back to security, `Math/rand` takes the seed, and perform some known pseudo-random generating algorithm, which means, if two function take the same seed,
+they give the same thing.
+
+While `crypto/rand` use `io.Reader` that could read from `/dev/urandom`. That made a difference from an algorithm.
+`/dev/urandom` generate the random number using hardware random-number generators, whose source is from real world around your computer.
+They are physically unpredictable. 
+ 
+`Math/rand` -> pseudo-random -> deterministic
+
+`crypto/rand` -> hardware-random -> non-deterministic
+
+Aside: [About](https://www.2uo.de/myths-about-urandom/) `dev/urandom`
+
 
 
 ## Reference
