@@ -199,6 +199,19 @@ for completely meaningless arguments combination like none padding RSA.
 
 Like `unsafe` package in Golang.
 
+### 8. Use unsigned bytes to represent binary data
+
+`byte is an alias for uint8` in Golang
+
+However, some notes: signed char could raise some issue with overflow problem.
+
+Like, `buf[32]` is a signed char buffer, and maybe you did something like `malloc(buf[0])`, then taking a negative value in malloc is equivalent as 
+taking in a very big positive number, and you create a huge heap space for that, and the program may crush.
+
+
+
+
+
 ## Usage Description
 
 ### Key Generation
@@ -219,6 +232,7 @@ Note that each user have to send a proof of knowledge first, and send the shares
 //                      (Share) : The share f_i(i) kept by the user i
 func KeyGen_send(index, threshold, NumPlayer uint32, str string) (PkgCommitment, []Share, Share)
 
+
 //VerifyPkg : User receive the all PkgCommitments for all users and verify it.
 //INPUT:
 //       pkg, ([]PkgCommitment) : All PkgCommitments for all users
@@ -228,24 +242,26 @@ func KeyGen_send(index, threshold, NumPlayer uint32, str string) (PkgCommitment,
 //         ([]PublicCommitment) : All PkgCommitments for all users but without nonce commitments
 func VerifyPkg(pkg []PkgCommitment, str string) ([]uint32, []PublicCommitment )
 
-//DistributeShares :
+
+//DistributeShares : sender distributes the share to some receiver
 //INPUTS:
-//             sender, (uint32) :
-//           receiver, (uint32) :
-//            shares, ([]Share) :
+//             sender, (uint32) : player that sends
+//           receiver, (uint32) : player that sender wants to send
+//            shares, ([]Share) : all shares f_sender(receiver), for all receivers
 //OUTPUTS:
-//                      (Share) :
+//                      (Share) : the share f_sender(receiver)
 func DistributeShares(sender, receiver uint32, shares []Share) Share
 
-//ReceiveAndGenKey :
+
+//ReceiveAndGenKey : Collect the shares it received, and generate the key
 //INPUTS:
-//                  receiver, (uint32) :
-//                ShareSaving, (Share) :
-// AllCommitment, ([]PublicCommitment) :
-//                   Shares ([]Shares) :
+//                  receiver, (uint32) : key generator
+//                ShareSaving, (Share) : the share kept f_i(i)
+// AllCommitment, ([]PublicCommitment) : Public commitments
+//                   Shares ([]Shares) : shares they receives f_j(i), for all j
 //OUTPUTS:
-//                              (Keys) :
-//                        (PublicKeys) :
+//                              (Keys) : the keys (secret and public)
+//                        (PublicKeys) : the keys (only public)
 func ReceiveAndGenKey(receiver uint32, ShareSaving Share, AllCommitment []PublicCommitment, Shares []Share) (Keys, PublicKeys)
 ```
 
@@ -254,12 +270,45 @@ func ReceiveAndGenKey(receiver uint32, ShareSaving Share, AllCommitment []Public
 Generate a signature
 
 ```go
+//PreProcess : This can generate bunch of nonce and commitments for any player
+//INPUTS:
+//                    index, (uint32) : player index
+//                    numSigns, (int) : how many signing operations is prepared
+//OUTPUTS:
+//       (PairOfNonceCommitmentsList) : Commitment use in public
+// []TwoPairOfNonceCommitmentAndNonce : Nonce and their commitments saved for later use
 func PreProcess(index uint32, numSigns int) (PairOfNonceCommitmentsList, []TwoPairOfNonceCommitmentAndNonce)
 
+//SA_GenerateB : The aggregator combines nonce commitment and generate public nonce commitments list for signing party
+//INPUTS:
+//                             S, ([]uint32) : chosen signing party
+//                         message, (string) : message it needs to be signed
+// AllCommitments ([]PairOfNonceCommitments) : gathered commitments
+//OUTPUTS:
+//                  []PairOfNonceCommitments : public nonce commitments list for signing party
+//                                    string : message
 func SA_GenerateB(S []uint32, message string ,AllCommitments []PairOfNonceCommitments) ([]PairOfNonceCommitments, string)
 
+//Sign : Player sign the message
+//INPUTS:
+//                            index, (uint32) : player index
+//               B ([]PairOfNonceCommitments) : Nonce commitments for signing party
+// save (*[]TwoPairOfNonceCommitmentAndNonce) : A pointer to the local storage of nonce commitment, removes the last element each time.
+//                                keys (Keys) : secret keys
+//OUTPUTS:
+//                                  (Response): the signing result 
 func Sign(index uint32, message string, B []PairOfNonceCommitments, save *[]TwoPairOfNonceCommitmentAndNonce, keys Keys) Response
 
+//SA_GenerateSignature : Agregator collects responses and generate the result signature
+//INPUTS:
+//                      Group_PK (ed.Element) : player index
+//                           message (string) : signing message
+//               B ([]PairOfNonceCommitments) : Nonce commitments for signing party
+//                     responses ([]Response) : All responses for signing party 
+//                         Pks ([]PublicKeys) : Individual public keys
+//OUTPUTS:
+//                                (Signature) : Final signature 
+//                                 ([]uint32) : Invalid users
 func SA_GenerateSignature(Group_PK ed.Element, message string, B []PairOfNonceCommitments, responses []Response, Pks []PublicKeys) (Signature, []uint32)
 ```
 
