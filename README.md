@@ -2,8 +2,8 @@
 
 [Flexible Round-Optimized Schnorr Threshold Signatures](https://crysp.uwaterloo.ca/software/frost/)
 
-## Document
-I changed some code to enhance the security of my code based on this
+## Some notes
+I try to change some code to enhance the security of my code based on this
 #### Source : [cryptocoding](https://github.com/veorq/cryptocoding)
 
 ### 1. Time of comparison between bytes vulnerability (Yes)
