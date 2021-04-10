@@ -312,6 +312,10 @@ func Sign(index uint32, message string, B []PairOfNonceCommitments, save *[]TwoP
 //                                (Signature) : Final signature 
 //                                 ([]uint32) : Invalid users
 func SA_GenerateSignature(Group_PK ed.Element, message string, B []PairOfNonceCommitments, responses []Response, Pks []PublicKeys) (Signature, []uint32)
+
+// Verify: Everyone can verifies the message using GroupPublicKey, it returns message
+// "Success to verify" or "Fail to verify" in constant time
+func Verify(Signature Signature ,GroupPublicKey ed.Element, message string) string
 ```
 
 ## Reference

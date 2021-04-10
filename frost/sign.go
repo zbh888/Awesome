@@ -101,3 +101,15 @@ func SA_GenerateSignature(Group_PK ed.Element, message string,
 	sig := Signature{R, ed.AddScalars(ResponseAddList)}
 	return sig, InvalidUsers
 }
+
+func Verify(Signature Signature ,GroupPublicKey ed.Element, message string) string {
+
+	Challenge := SignGenChallenge(Signature.R, GroupPublicKey, message)
+
+	R_test := ed.AddElements([]ed.Element{ed.ScalarMultiplyBase(Signature.Z),
+		ScMulElement(ScalarNeg(Challenge), GroupPublicKey)})
+	if !(subtle.ConstantTimeCompare(R_test, Signature.R) == 1) {
+		return "Fail to verify"
+	}
+	return "Success to verify"
+}

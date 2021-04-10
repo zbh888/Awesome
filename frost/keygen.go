@@ -1,12 +1,24 @@
 package frost
 
 import (
+	"errors"
 	"fmt"
 	ed "gitlab.com/polychainlabs/threshold-ed25519/pkg"
 )
 
-func KeyGen_send(index, threshold, NumPlayer uint32, str string) (PkgCommitment, []Share, Share) {
-
+func KeyGen_send(index, threshold, NumPlayer uint32, str string) (PkgCommitment, []Share, Share, error) {
+	if threshold < 1 {
+		return PkgCommitment{},nil, Share{}, errors.New("threshold should be at least one")
+	}
+	if NumPlayer < 1 {
+		return PkgCommitment{},nil, Share{}, errors.New("the number of total participants should be at least one")
+	}
+	if threshold > NumPlayer {
+		return PkgCommitment{},nil, Share{}, errors.New("threshold should be smaller than or equal to the number of total participants")
+	}
+	if index < 1 || index > NumPlayer {
+		return PkgCommitment{},nil, Share{}, errors.New("invalid player index")
+	}
 	var secret ed.Scalar = RandomGenerator()
 	var nonce ed.Scalar = RandomGenerator()
 	var nonceCommitment ed.Element = ed.ScalarMultiplyBase(nonce)
@@ -67,7 +79,7 @@ func KeyGen_send(index, threshold, NumPlayer uint32, str string) (PkgCommitment,
 		PCommitment: Commitment,
 	}
 
-	return pkg, VecShare, ShareSaving
+	return pkg, VecShare, ShareSaving, nil
 }
 
 // Player verifies all commitments they receive, and return invalid player index and valid commitments

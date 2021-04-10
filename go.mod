@@ -1,4 +1,4 @@
-module github/zbh888/awsome
+module github/zbh888/FROSTsignature
 
 go 1.15
 
