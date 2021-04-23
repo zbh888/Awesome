@@ -83,7 +83,7 @@ func KeyGen_send(index, threshold, NumPlayer uint32, str string) (PkgCommitment,
 }
 
 // Player verifies all commitments they receive, and return invalid player index and valid commitments
-func VerifyPkg(pkg []PkgCommitment, str string) ([]uint32, []PublicCommitment ) {
+func VerifyPkg(pkg []PkgCommitment, str string) ([]uint32, []PublicCommitment) {
 	var InvalidList []uint32
 	var ValidCommitment []PublicCommitment
 	//check each one

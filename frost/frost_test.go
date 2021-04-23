@@ -3,6 +3,7 @@ package frost_test
 import (
 	"fmt"
 	"github/zbh888/FROSTsignature/frost"
+	ed "gitlab.com/polychainlabs/threshold-ed25519/pkg"
 	"testing"
 )
 
@@ -12,10 +13,8 @@ func Test1_Simple(t *testing.T) {
 	pkg2, shares2, save2, _ := frost.KeyGen_send(2, 2, 3, "123")
 	pkg3, shares3, save3, _ := frost.KeyGen_send(3, 2, 3, "123")
 	pkgs := []frost.PkgCommitment{pkg1, pkg2, pkg3}
-	//Every one could check it
-	u, _ := frost.VerifyPkg(pkgs, "123")
-	//They just kept the commitment
-	AllCommitment := []frost.PublicCommitment{pkg1.PCommitment, pkg2.PCommitment, pkg3.PCommitment}
+	//Every one could check it, and they just kept the commitment
+	u, AllCommitment := frost.VerifyPkg(pkgs, "123")
 	if len(u) != 0 {
 		t.Error("No")
 	}
@@ -100,7 +99,7 @@ func Test2_EdgeErrorHandle(t *testing.T) {
 	}
 }
 
-//Single player signature
+//Single player signature, with magic number
 func Test3_EdgeCaseSignglePlayer(t *testing.T) {
 	pkg1, _, save1, _ := frost.KeyGen_send(1, 1, 1, "1")
 	// public commitments, nonce commitment
@@ -138,5 +137,29 @@ func Test3_EdgeCaseSignglePlayer(t *testing.T) {
 
 }
 
-func Test3_EdgeErrorHandle(t *testing.T) {
+// Change nonce or commitment will make user get into invalid list.
+func Test4_FailToVerify(t *testing.T) {
+	pkg1, _, _, _ := frost.KeyGen_send(1, 2, 4, "123")
+	pkg2, _, _, _ := frost.KeyGen_send(2, 2, 4, "123")
+	pkg3, _, _, _ := frost.KeyGen_send(3, 2, 4,"Wrong")
+	pkg4, _, _, _ := frost.KeyGen_send(4, 2, 4,"123")
+	pkg2.Nounce_u = frost.ToScalar(88888888)
+	pkg1.Nounce_R = ed.ScalarMultiplyBase(frost.ToScalar(12345678))
+	//Change the secret
+	pkg4.PCommitment.Commitment[0] = ed.ScalarMultiplyBase(frost.ToScalar(12345678))
+	pkgs := []frost.PkgCommitment{pkg1, pkg2, pkg3, pkg4}
+	// Assume there is no duplicate issue, and number fits (easily detected duplication by Pkg index)
+	invalid, _ := frost.VerifyPkg(pkgs,"123")
+	if len(invalid) != 4 {
+		t.Error("Commitment should fail but not detected")
+	}
+	pkg5, _, _, _ := frost.KeyGen_send(5, 2, 5,"123")
+	pkgs = []frost.PkgCommitment{pkg1, pkg2, pkg3, pkg4, pkg5}
+	// Change this should not affect anything in this case
+	pkg5.PCommitment.Commitment[1] = ed.ScalarMultiplyBase(frost.ToScalar(12345678))
+	invalid, _ = frost.VerifyPkg(pkgs,"123")
+	if len(invalid) != 4 {
+		t.Error("Commitment should fail but not detected")
+	}
 }
+

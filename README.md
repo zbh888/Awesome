@@ -2,6 +2,15 @@
 
 [Flexible Round-Optimized Schnorr Threshold Signatures](https://crysp.uwaterloo.ca/software/frost/)
 
+## Something to notice
+
+### Round1
+
+1. Users should verify there is no commitment with duplicate index, or any missing index.
+
+2. The function `KeyGen` are using the different number of players, or threshold can only be detected in Round2. Anyway,
+it doesn't hurt to at least perform a verification on commitment...
+
 ## Some notes
 I try to change some code to enhance the security of my code based on this
 #### Source : [cryptocoding](https://github.com/veorq/cryptocoding)

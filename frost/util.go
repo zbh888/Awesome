@@ -198,3 +198,13 @@ func SignGenChallenge(R ed.Element, Y ed.Element ,message string) ed.Scalar {
 	res = Reverse(big_num.Bytes())
 	return res
 }
+
+func ConstantTimeContains(list []uint32, target uint32) bool {
+	flag := false
+	for _, x := range list {
+		if target == x {
+			flag = true
+		}
+	}
+	return flag
+}
