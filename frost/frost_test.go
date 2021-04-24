@@ -19,18 +19,15 @@ func Test1_Simple(t *testing.T) {
 		t.Error("No")
 	}
 	//Simulating sending shares
-	shares_to1 := []frost.Share{
-		frost.DistributeShares(2, 1, shares2),
-		frost.DistributeShares(3, 1, shares3),
-	}
-	shares_to2 := []frost.Share{
-		frost.DistributeShares(1, 2, shares1),
-		frost.DistributeShares(3, 2, shares3),
-	}
-	shares_to3 := []frost.Share{
-		frost.DistributeShares(1, 3, shares1),
-		frost.DistributeShares(2, 3, shares2),
-	}
+	s1, _ := frost.DistributeShares(2, 1, shares2)
+	s2, _ := frost.DistributeShares(3, 1, shares3)
+	shares_to1 := []frost.Share{s1,s2}
+	s1, _ = frost.DistributeShares(1, 2, shares1)
+	s2, _ = frost.DistributeShares(3, 2, shares3)
+	shares_to2 := []frost.Share{s1,s2}
+	s1, _ = frost.DistributeShares(1, 3, shares1)
+	s2, _ = frost.DistributeShares(2, 3, shares2)
+	shares_to3 := []frost.Share{s1,s2}
 	//generate keys without panic
 	Sk1, Pk1 := frost.ReceiveAndGenKey(1, save1, AllCommitment, shares_to1)
 	Sk2, Pk2 := frost.ReceiveAndGenKey(2, save2, AllCommitment, shares_to2)
@@ -70,7 +67,7 @@ func Test1_Simple(t *testing.T) {
 	}
 }
 
-func Test2_EdgeErrorHandle(t *testing.T) {
+func Test2_UsageErrorHandle(t *testing.T) {
 	// threshold is 0
 	_, _, _, err := frost.KeyGen_send(1, 0, 3, "123")
 	if err == nil { //without error
@@ -138,7 +135,7 @@ func Test3_EdgeCaseSignglePlayer(t *testing.T) {
 }
 
 // Change nonce or commitment will make user get into invalid list.
-func Test4_FailToVerify(t *testing.T) {
+func Test4_FailToVerifyCommitment(t *testing.T) {
 	pkg1, _, _, _ := frost.KeyGen_send(1, 2, 4, "123")
 	pkg2, _, _, _ := frost.KeyGen_send(2, 2, 4, "123")
 	pkg3, _, _, _ := frost.KeyGen_send(3, 2, 4,"Wrong")
@@ -161,5 +158,40 @@ func Test4_FailToVerify(t *testing.T) {
 	if len(invalid) != 4 {
 		t.Error("Commitment should fail but not detected")
 	}
+}
+
+func Test5_DistributeFailure(t *testing.T) {
+	_, shares1, _, _ := frost.KeyGen_send(1, 2, 3, "123")
+	// Distribute to non-existing player
+	_, err := frost.DistributeShares(1,4,shares1)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		t.Error("Fail when distributing to non-existing player")
+	}
+	_, err = frost.DistributeShares(1,1,shares1)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		t.Error("Fail when self sending")
+	}
+	shares1[1].Sender = 2
+	_, err = frost.DistributeShares(1,2,shares1)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		t.Error("Fail when shares sender get changed")
+	}
+	shares1[1].Sender = 1
+	shares1[0].Receiver = 3
+	_, err = frost.DistributeShares(1,3,shares1)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		t.Error("Fail when shares got duplicate receiver")
+	}
+}
+
+func Test6_ReceiveFailure(t *testing.T) {
 }
 

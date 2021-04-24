@@ -97,20 +97,29 @@ func VerifyPkg(pkg []PkgCommitment, str string) ([]uint32, []PublicCommitment) {
 	return InvalidList, ValidCommitment
 }
 
-func DistributeShares(sender, receiver uint32, shares []Share) Share {
+func DistributeShares(sender, receiver uint32, shares []Share) (Share,error) {
+	if sender == receiver {
+		return Share{},  fmt.Errorf("sender should differ from receiver")
+	}
+	find := false
 	for _, s := range shares {
 		if sender != s.Sender {
-			fmt.Printf("Sender %d differs from sender %d, in shares", sender, s.Sender)
-			panic("DistributeShares")
+			return Share{},  fmt.Errorf("sender %d differs from index-%d in shares", sender, s.Sender)
+		}
+		if receiver == s.Receiver {
+			if !find {
+				find = true
+			} else {
+				return Share{},  fmt.Errorf("duplicate share for receiver %d found", s.Receiver)
+			}
 		}
 	}
 	for _, s := range shares {
 		if receiver == s.Receiver {
-			return s
+			return s, nil
 		}
 	}
-	fmt.Printf("Didn't find corresponding share for %d in sender %d's shares\n", receiver, sender)
-	panic("DistributeShares")
+	return Share{},  fmt.Errorf("Didn't find corresponding share for index %d in sender %d's shares\n", receiver, sender)
 }
 //player 1 should have share f_2(1), f_3(1)..., f_n(1)
 func ReceiveAndGenKey(receiver uint32, ShareSaving Share,

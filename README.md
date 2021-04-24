@@ -241,7 +241,7 @@ Note that each user have to send a proof of knowledge first, and send the shares
 //              (PkgCommitment) : A list of commitments on coefficients along with the proof of knowledge, this variable should be sent first.
 //                    ([]Share) : A list of shares f_i(j) for all 1<=j<=n except j=i. This variable should be deleted later.
 //                      (Share) : The share f_i(i) kept by the user i
-func KeyGen_send(index, threshold, NumPlayer uint32, str string) (PkgCommitment, []Share, Share)
+func KeyGen_send(index, threshold, NumPlayer uint32, str string) (PkgCommitment, []Share, Share, error)
 
 
 //VerifyPkg : User receive the all PkgCommitments for all users and verify it.
@@ -261,7 +261,7 @@ func VerifyPkg(pkg []PkgCommitment, str string) ([]uint32, []PublicCommitment )
 //            shares, ([]Share) : all shares f_sender(receiver), for all receivers
 //OUTPUTS:
 //                      (Share) : the share f_sender(receiver)
-func DistributeShares(sender, receiver uint32, shares []Share) Share
+func DistributeShares(sender, receiver uint32, shares []Share) Share, error
 
 
 //ReceiveAndGenKey : Collect the shares it received, and generate the key
