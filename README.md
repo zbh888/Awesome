@@ -2,17 +2,28 @@
 
 [Flexible Round-Optimized Schnorr Threshold Signatures](https://crysp.uwaterloo.ca/software/frost/)
 
-## Something to notice
+## Testing notes
 
-### Round1
+### Keygen - Round1
 
 1. Users should verify there is no commitment with duplicate index, or any missing index.
 
 2. The function `KeyGen` are using the different number of players, or threshold can only be detected in Round2. Anyway,
 it doesn't hurt to at least perform a verification on commitment...
+   
+### Things learned during testing
+
+Handling error while considering security is something different from normal testing
+
+1. Some error is simply usage error like wrongly entered the index. This type of error could clearly tell where is wrong like
+"you entered the index 4, which should be 3 (your index)". But when meeting some issue related to security, the error message should
+   be vague to hide information like "Verification fail". I believe if we can handle usage error and security error clearly,
+   it will both benefit the users and ecosystem by enhancing usability and performance.
+   
+2. We should always be careful about side-channel attack when facing the code block involving the key information. 
 
 ## Some notes
-I try to change some code to enhance the security of my code based on this
+I learned some useful skills to enhance the security of my code based on this
 #### Source : [cryptocoding](https://github.com/veorq/cryptocoding)
 
 ### 1. Time of comparison between bytes vulnerability (Yes)
@@ -251,7 +262,7 @@ func KeyGen_send(index, threshold, NumPlayer uint32, str string) (PkgCommitment,
 //OUTPUT:
 //                   ([]uint32) : A list of invalid users
 //         ([]PublicCommitment) : All PkgCommitments for all users but without nonce commitments
-func VerifyPkg(pkg []PkgCommitment, str string) ([]uint32, []PublicCommitment )
+func VerifyPkg(pkg []PkgCommitment, str string) ([]uint32, []PublicCommitment)
 
 
 //DistributeShares : sender distributes the share to some receiver
@@ -261,7 +272,7 @@ func VerifyPkg(pkg []PkgCommitment, str string) ([]uint32, []PublicCommitment )
 //            shares, ([]Share) : all shares f_sender(receiver), for all receivers
 //OUTPUTS:
 //                      (Share) : the share f_sender(receiver)
-func DistributeShares(sender, receiver uint32, shares []Share) Share, error
+func DistributeShares(sender, receiver uint32, shares []Share) (Share, error)
 
 
 //ReceiveAndGenKey : Collect the shares it received, and generate the key
@@ -273,7 +284,7 @@ func DistributeShares(sender, receiver uint32, shares []Share) Share, error
 //OUTPUTS:
 //                              (Keys) : the keys (secret and public)
 //                        (PublicKeys) : the keys (only public)
-func ReceiveAndGenKey(receiver uint32, ShareSaving Share, AllCommitment []PublicCommitment, Shares []Share) (Keys, PublicKeys)
+func ReceiveAndGenKey(receiver uint32, ShareSaving Share, AllCommitment []PublicCommitment, Shares []Share) (Keys, PublicKeys, error)
 ```
 
 ### Signature Generation

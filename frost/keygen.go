@@ -123,19 +123,25 @@ func DistributeShares(sender, receiver uint32, shares []Share) (Share,error) {
 }
 //player 1 should have share f_2(1), f_3(1)..., f_n(1)
 func ReceiveAndGenKey(receiver uint32, ShareSaving Share,
-	AllCommitment []PublicCommitment, Shares []Share) (Keys, PublicKeys) {
+	AllCommitment []PublicCommitment, Shares []Share) (Keys, PublicKeys, error) {
+	Total_Share := append(Shares, ShareSaving)
 	//checking length
-	if !VerifyShare(ShareSaving, AllCommitment) {
-		panic("Fail to verify")
-	}
-	for _, s := range Shares {
-		if !VerifyShare(s,  AllCommitment) {
-			panic("Fail to verify")
+	for _, s := range Total_Share {
+		if s.Receiver != receiver {
+			return Keys{}, PublicKeys{}, errors.New("receiver and share owner did not match")
 		}
 	}
+	count := 0
+	for _, s := range Total_Share {
+		if !VerifyShare(s,  AllCommitment) {
+			count += 1
+		}
+	}
+	if count != 0 { // verify in constant time
+		return Keys{}, PublicKeys{}, errors.New("fail to verify")
+	}
 	var AddScalarList []ed.Scalar
-	AddScalarList = append(AddScalarList, ShareSaving.Value)
-	for _, s := range Shares {
+	for _, s := range Total_Share {
 		AddScalarList = append(AddScalarList, s.Value)
 	}
 	secret := ed.AddScalars(AddScalarList)
@@ -150,5 +156,5 @@ func ReceiveAndGenKey(receiver uint32, ShareSaving Share,
 
 	keys := Keys{receiver, secret,PK,groupPK}
 	p_keys := PublicKeys{receiver,PK,groupPK}
-	return keys, p_keys
+	return keys, p_keys, nil
 }

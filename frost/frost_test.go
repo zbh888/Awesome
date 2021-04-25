@@ -29,10 +29,9 @@ func Test1_Simple(t *testing.T) {
 	s2, _ = frost.DistributeShares(2, 3, shares2)
 	shares_to3 := []frost.Share{s1,s2}
 	//generate keys without panic
-	Sk1, Pk1 := frost.ReceiveAndGenKey(1, save1, AllCommitment, shares_to1)
-	Sk2, Pk2 := frost.ReceiveAndGenKey(2, save2, AllCommitment, shares_to2)
-	_, _ = frost.ReceiveAndGenKey(2, save2, AllCommitment, shares_to2)
-	_, _ = frost.ReceiveAndGenKey(3, save3, AllCommitment, shares_to3)
+	Sk1, Pk1, _ := frost.ReceiveAndGenKey(1, save1, AllCommitment, shares_to1)
+	Sk2, Pk2, _ := frost.ReceiveAndGenKey(2, save2, AllCommitment, shares_to2)
+	_, _, _ = frost.ReceiveAndGenKey(3, save3, AllCommitment, shares_to3)
 	//Say we sign 2 messages
 	ListNonceCommits1, Save1 := frost.PreProcess(1, 2)
 	ListNonceCommits2, Save2 := frost.PreProcess(2, 2)
@@ -108,7 +107,7 @@ func Test3_EdgeCaseSignglePlayer(t *testing.T) {
 	}
 	// cut the nonce commitment
 	AllCommitment := []frost.PublicCommitment{pkg1.PCommitment}
-	Sk1, Pk1 := frost.ReceiveAndGenKey(1, save1, AllCommitment, nil)
+	Sk1, Pk1, _ := frost.ReceiveAndGenKey(1, save1, AllCommitment, nil)
 	ListNonceCommits1, Save1 := frost.PreProcess(1, 2) // 2 signings
 
 	S := []uint32{1}
@@ -193,5 +192,50 @@ func Test5_DistributeFailure(t *testing.T) {
 }
 
 func Test6_ReceiveFailure(t *testing.T) {
+	pkg1, shares1, save1, _ := frost.KeyGen_send(1, 2, 3, "123")
+	pkg2, shares2, save2, _ := frost.KeyGen_send(2, 2, 3, "123")
+	pkg3, shares3, save3, _ := frost.KeyGen_send(3, 2, 3, "123")
+	pkgs := []frost.PkgCommitment{pkg1, pkg2, pkg3}
+	//Every one could check it, and they just kept the commitment
+	u, AllCommitment := frost.VerifyPkg(pkgs, "123")
+	if len(u) != 0 {
+		t.Error("No")
+	}
+	//Simulating sending shares
+	s1, _ := frost.DistributeShares(2, 1, shares2)
+	s2, _ := frost.DistributeShares(3, 1, shares3)
+	shares_to1 := []frost.Share{s1,s2}
+	s1, _ = frost.DistributeShares(1, 2, shares1)
+	s2, _ = frost.DistributeShares(3, 2, shares3)
+	shares_to2 := []frost.Share{s1,s2}
+	s1, _ = frost.DistributeShares(1, 3, shares1)
+	s2, _ = frost.DistributeShares(2, 3, shares2)
+	shares_to3 := []frost.Share{s1,s2}
+	//generate keys without panic
+	_, _, err := frost.ReceiveAndGenKey(2, save1, AllCommitment, shares_to1)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		t.Error("Fail when wrongly indexing")
+	}
+	save2.Value = frost.ToScalar(88888888)
+	_, _, err = frost.ReceiveAndGenKey(2, save2, AllCommitment, shares_to2)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		t.Error("Fail when share get changed")
+	}
+	shares_to3[0].Value = frost.ToScalar(88888888)
+	_, _, err = frost.ReceiveAndGenKey(3, save3, AllCommitment, shares_to3)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		t.Error("Fail when share get changed")
+	}
 }
+
+func Test7_GenerateKeyFailure(t *testing.T) {
+}
+
+
 

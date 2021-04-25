@@ -48,10 +48,15 @@ func VerifyShare(share Share, AllCommitment []PublicCommitment) bool {
 	verifier := share.Receiver
 	shareCommitment := ed.ScalarMultiplyBase(share.Value)
 	var pCommitment []ed.Element
+	find := false
 	for _,s := range AllCommitment { //We might consider sorting them first
 		if s.Index == sender {
 			pCommitment = s.Commitment
+			find = true
 		}
+	}
+	if !find {
+		return false
 	}
 	t := len(pCommitment) - 1
 	res :=  pCommitment[t]
