@@ -2,15 +2,27 @@
 
 [Flexible Round-Optimized Schnorr Threshold Signatures](https://crysp.uwaterloo.ca/software/frost/)
 
+```go
+
+// Assume players all follow the rule
+// This test details the whole procedure  and the part need to be handled by the server
+// And if someone didn't follow the rule, error will show up like in other tests
+
+func TestAlog3_CompleteMorePlayer(t *testing.T)
+```
+
 ## Testing notes
 
-### Keygen - Round1
+### Keygen
 
-1. Users should verify there is no commitment with duplicate index, or any missing index.
+If the function `KeyGen` wrongly be used with some different number of players, or threshold, then this can be detected when distributing shares.
+But, it doesn't hurt to at least perform a verification on commitment...
 
-2. The function `KeyGen` are using the different number of players, or threshold can only be detected in Round2. Anyway,
-it doesn't hurt to at least perform a verification on commitment...
-   
+### Signing
+
+Like said in the paper, there's also things can be done by the network issue. This implementation also checks the error caused by network issue, like
+missing package due to network delay. I'm trying to make the user catch every reason why causing the failure.
+
 ### Things learned during testing
 
 Handling error while considering security is something different from normal testing
@@ -299,7 +311,7 @@ Generate a signature
 //OUTPUTS:
 //       (PairOfNonceCommitmentsList) : Commitment use in public
 // []TwoPairOfNonceCommitmentAndNonce : Nonce and their commitments saved for later use
-func PreProcess(index uint32, numSigns int) (PairOfNonceCommitmentsList, []TwoPairOfNonceCommitmentAndNonce)
+func PreProcess(index uint32, numSigns int) (PairOfNonceCommitmentsList, []TwoPairOfNonceCommitmentAndNonce, error)
 
 //SA_GenerateB : The aggregator combines nonce commitment and generate public nonce commitments list for signing party
 //INPUTS:
@@ -307,9 +319,10 @@ func PreProcess(index uint32, numSigns int) (PairOfNonceCommitmentsList, []TwoPa
 //                         message, (string) : message it needs to be signed
 // AllCommitments ([]PairOfNonceCommitments) : gathered commitments
 //OUTPUTS:
-//                  []PairOfNonceCommitments : public nonce commitments list for signing party
+//                  []PairOfNonceCommitments : public nonce commitments list for signing party, empty if any missing index detected
 //                                    string : message
-func SA_GenerateB(S []uint32, message string ,AllCommitments []PairOfNonceCommitments) ([]PairOfNonceCommitments, string)
+//                                  []uint32 : missing index in AllCommitments (network issue maybe)
+func SA_GenerateB(S []uint32, message string ,AllCommitments []PairOfNonceCommitments) ([]PairOfNonceCommitments, string, []uint32)
 
 //Sign : Player sign the message
 //INPUTS:

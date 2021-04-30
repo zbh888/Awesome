@@ -1,10 +1,19 @@
 package frost
 
-import ed "gitlab.com/polychainlabs/threshold-ed25519/pkg"
+import (
+	"errors"
+	ed "gitlab.com/polychainlabs/threshold-ed25519/pkg"
+)
 
-func PreProcess(index uint32, numSigns int) (PairOfNonceCommitmentsList, []TwoPairOfNonceCommitmentAndNonce) {
-	var L []PairOfNonceCommitments
+func PreProcess(index uint32, numSigns int) (PairOfNonceCommitmentsList, []TwoPairOfNonceCommitmentAndNonce, error) {
 	var Save []TwoPairOfNonceCommitmentAndNonce
+	if numSigns < 1 {
+		return PairOfNonceCommitmentsList{}, Save, errors.New("numSigns should be greater than 0")
+	}
+	if index < 1 {
+		return PairOfNonceCommitmentsList{}, Save, errors.New("index should be greater than 0")
+	}
+	var L []PairOfNonceCommitments
 	var i int
 	for i = 0; i < numSigns; i++ {
 		d := RandomGenerator()
@@ -17,7 +26,7 @@ func PreProcess(index uint32, numSigns int) (PairOfNonceCommitmentsList, []TwoPa
 		Save = append(Save, StoringCommitments)
 	}
 	List := PairOfNonceCommitmentsList{index, L}
-	return List, Save
+	return List, Save, nil
 }
 
 

@@ -5,19 +5,29 @@ import (
 	ed "gitlab.com/polychainlabs/threshold-ed25519/pkg"
 )
 
-//SA fetched the available Commitments from the server, server will handle
-//the removing of Commitment and provide the correct PairOfCommitment, so SA should not care about it
-func SA_GenerateB(S []uint32, message string ,AllCommitments []PairOfNonceCommitments) ([]PairOfNonceCommitments, string) {
+// SA fetched the available Commitments from the server,
+// server will handle the removing of Commitment and they provide the correct PairOfCommitment, so SA should not worry about it
+// but still add error handling in case
+func SA_GenerateB(S []uint32, message string, AllCommitments []PairOfNonceCommitments) ([]PairOfNonceCommitments, string, []uint32) {
 
 	var B []PairOfNonceCommitments
 	m := make(map[uint32]PairOfNonceCommitments) //make a map for efficiency
 	for _, C := range AllCommitments {
 		m[C.Index] = C
 	}
+	var missing []uint32
 	for _, index := range S {
-		B = append(B, m[index])
+		val, exists := m[index]
+		if exists != true {
+			missing = append(missing, index)
+		}
+		B = append(B, val)
 	}
-	return B, message
+	if len(missing) != 0 {
+		var Empty []PairOfNonceCommitments
+		return Empty, message, missing
+	}
+	return B, message, missing
 }
 
 //using reference for deleting the corresponding saving share commitment
