@@ -5,7 +5,7 @@
 ```go
 
 // Assume players all follow the rule
-// This test details the whole procedure  and the part need to be handled by the server
+// This test details the whole procedure
 // And if someone didn't follow the rule, error will show up like in other tests
 
 func TestAlog3_CompleteMorePlayer(t *testing.T)
@@ -22,6 +22,9 @@ But, it doesn't hurt to at least perform a verification on commitment...
 
 Like said in the paper, there's also things can be done by the network issue. This implementation also checks the error caused by network issue, like
 missing package due to network delay. I'm trying to make the user catch every reason why causing the failure.
+
+Aggregation part has been tested by changing some parameter like message or nonce in the simple test to see if it returns invalid users.
+
 
 ### Things learned during testing
 

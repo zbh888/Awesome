@@ -151,12 +151,13 @@ func ScalarNeg(s ed.Scalar) ed.Scalar  {
 // used filippo.io/edwards25519
 func ScInverse(scalar ed.Scalar) ed.Scalar {
 	s := new(FiloEd.Scalar)
-	s, err := s.SetCanonicalBytes(scalar)
-	if s == nil {
+	ss, err := s.SetCanonicalBytes(scalar)
+	if ss == nil {
 		fmt.Println(err)
 		panic("Fail to set canonical byte")
 	}
-	return s.Bytes()
+	ss = s.Invert(ss)
+	return ss.Bytes()
 }
 
 func IsInG(element ed.Element) bool {
@@ -182,8 +183,8 @@ func SignGenRoh(index uint32, message string, B []PairOfNonceCommitments) ed.Sca
 }
 
 func SignGenLagrangeCoefficient(signer uint32, S []uint32) ed.Scalar {
-	nominator := ToScalar(1)
-	denominator := ToScalar(1)
+	nominator := ToScalar(uint32(1))
+	denominator := ToScalar(uint32(1))
 	for _, s := range S {
 		if s != signer {
 			nominator = MulScalars(nominator, ToScalar(s))

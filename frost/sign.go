@@ -2,6 +2,7 @@ package frost
 
 import (
 	"crypto/subtle"
+	"errors"
 	ed "gitlab.com/polychainlabs/threshold-ed25519/pkg"
 )
 
@@ -32,19 +33,27 @@ func SA_GenerateB(S []uint32, message string, AllCommitments []PairOfNonceCommit
 
 //using reference for deleting the corresponding saving share commitment
 func Sign(index uint32, message string, B []PairOfNonceCommitments,
-	save *[]TwoPairOfNonceCommitmentAndNonce, keys Keys) Response {
+	save *[]TwoPairOfNonceCommitmentAndNonce, keys Keys) (Response, error) {
+
+	if len(*save) == 0 {
+		return Response{}, errors.New("save has length 0")
+	}
+	if index != keys.Index {
+		return Response{}, errors.New("entered the wrong index")
+	}
 
 	Map_forPair := make(map[uint32]PairOfNonceCommitments) //make a map for efficiency
 	Map_forRoh := make(map[uint32]ed.Scalar) //make a map for efficiency
 	var S []uint32
 	for _, pair := range B {
 		if !IsInG(pair.Nonce_D) || !IsInG(pair.Nonce_E) {
-			panic("No")
+			return Response{}, errors.New("some commitment is not in curve25519 field")
 		}
 		S = append(S, pair.Index)
 		Map_forPair[pair.Index] = pair
 		Map_forRoh[pair.Index] = SignGenRoh(pair.Index, message, B)
 	}
+
 	var ListElementForAddition []ed.Element
 	for _, i := range S {
 		ListElementForAddition = append(ListElementForAddition, Map_forPair[i].Nonce_D)
@@ -62,7 +71,7 @@ func Sign(index uint32, message string, B []PairOfNonceCommitments,
 	r := AddScalars(AddScalars(d, MulScalars(e, Map_forRoh[index])), Intermediate)
 
 	*save = (*save)[:len(*save) - 1]
-	return Response{index, r}
+	return Response{index, r}, nil
 }
 
 // Assume Pks are all members of S
@@ -103,7 +112,7 @@ func SA_GenerateSignature(Group_PK ed.Element, message string,
 		}
 	}
 	if len(InvalidUsers) != 0 {
-		panic("No")
+		return Signature{}, InvalidUsers
 	}
 	for _, index := range Users {
 		ResponseAddList = append(ResponseAddList, Map_forResponse[index])
