@@ -43,7 +43,7 @@ func Sign(index uint32, message string, B []PairOfNonceCommitments,
 	}
 
 	Map_forPair := make(map[uint32]PairOfNonceCommitments) //make a map for efficiency
-	Map_forRoh := make(map[uint32]ed.Scalar) //make a map for efficiency
+	Map_forRoh := make(map[uint32]ed.Scalar)               //make a map for efficiency
 	var S []uint32
 	for _, pair := range B {
 		if !IsInG(pair.Nonce_D) || !IsInG(pair.Nonce_E) {
@@ -57,12 +57,12 @@ func Sign(index uint32, message string, B []PairOfNonceCommitments,
 	var ListElementForAddition []ed.Element
 	for _, i := range S {
 		ListElementForAddition = append(ListElementForAddition, Map_forPair[i].Nonce_D)
-		ListElementForAddition = append(ListElementForAddition, ScMulElement(Map_forRoh[i],Map_forPair[i].Nonce_E))
+		ListElementForAddition = append(ListElementForAddition, ScMulElement(Map_forRoh[i], Map_forPair[i].Nonce_E))
 	}
 	GroupCommit := ed.AddElements(ListElementForAddition)
-	Challenge := SignGenChallenge(GroupCommit, keys.GroupPublicKey,message)
+	Challenge := SignGenChallenge(GroupCommit, keys.GroupPublicKey, message)
 
-	var LagrangeCoefficient ed.Scalar = SignGenLagrangeCoefficient(index, S)
+	var LagrangeCoefficient = SignGenLagrangeCoefficient(index, S)
 
 	//This block is just for r = d+(e*p)+lambda*s*c
 	Intermediate := MulScalars(MulScalars(LagrangeCoefficient, keys.SecretKey), Challenge) //lambda*s*c
@@ -70,7 +70,7 @@ func Sign(index uint32, message string, B []PairOfNonceCommitments,
 	e := (*save)[len(*save)-1].Nonce_e
 	r := AddScalars(AddScalars(d, MulScalars(e, Map_forRoh[index])), Intermediate)
 
-	*save = (*save)[:len(*save) - 1]
+	*save = (*save)[:len(*save)-1]
 	return Response{index, r}, nil
 }
 
@@ -82,8 +82,8 @@ func SA_GenerateSignature(Group_PK ed.Element, message string,
 	var InvalidUsers []uint32
 	var ResponseAddList []ed.Scalar
 	Map_forResponse := make(map[uint32]ed.Scalar) //make a map for efficiency
-	Map_forPk := make(map[uint32]ed.Element) //make a map for efficiency
-	Map_forR_i := make(map[uint32]ed.Element) //make a map for efficiency
+	Map_forPk := make(map[uint32]ed.Element)      //make a map for efficiency
+	Map_forR_i := make(map[uint32]ed.Element)     //make a map for efficiency
 	for _, response := range responses {
 		Map_forResponse[response.index] = response.value
 	}
@@ -94,7 +94,7 @@ func SA_GenerateSignature(Group_PK ed.Element, message string,
 
 	var Signature_AddList []ed.Element
 	for _, pair := range B {
-		Rho := SignGenRoh(pair.Index, message,B)
+		Rho := SignGenRoh(pair.Index, message, B)
 		R_AddList := []ed.Element{pair.Nonce_D, ScMulElement(Rho, pair.Nonce_E)}
 		R_i := ed.AddElements(R_AddList)
 		Map_forR_i[pair.Index] = R_i
@@ -121,7 +121,7 @@ func SA_GenerateSignature(Group_PK ed.Element, message string,
 	return sig, InvalidUsers
 }
 
-func Verify(Signature Signature ,GroupPublicKey ed.Element, message string) string {
+func Verify(Signature Signature, GroupPublicKey ed.Element, message string) string {
 
 	Challenge := SignGenChallenge(Signature.R, GroupPublicKey, message)
 

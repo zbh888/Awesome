@@ -10,6 +10,7 @@ import (
 	ed "gitlab.com/polychainlabs/threshold-ed25519/pkg"
 	"math/big"
 )
+
 // This generate a chanllenge
 func GenChallenge(index uint32, str string, secretCommitment ed.Element, nounceCommitment ed.Element) ed.Scalar {
 	var res []byte
@@ -34,13 +35,13 @@ func isValid(pkg PkgCommitment, str string) bool {
 		AddList = append(AddList, ed.ScalarMultiplyBase(pkg.Nounce_u))
 		AddList = append(AddList, ScMulElement(negChallenge, secretCommitment))
 		Rtest := ed.AddElements(AddList)
-		if subtle.ConstantTimeCompare(Rtest,nonceCommitment) == 1 {
+		if subtle.ConstantTimeCompare(Rtest, nonceCommitment) == 1 {
 			return true
 		}
 	} else {
 		panic("Unexpected")
 	}
-	return  false
+	return false
 }
 
 func VerifyShare(share Share, AllCommitment []PublicCommitment) bool {
@@ -49,7 +50,7 @@ func VerifyShare(share Share, AllCommitment []PublicCommitment) bool {
 	shareCommitment := ed.ScalarMultiplyBase(share.Value)
 	var pCommitment []ed.Element
 	find := false
-	for _,s := range AllCommitment { //We might consider sorting them first
+	for _, s := range AllCommitment { //We might consider sorting them first
 		if s.Index == sender {
 			pCommitment = s.Commitment
 			find = true
@@ -59,7 +60,7 @@ func VerifyShare(share Share, AllCommitment []PublicCommitment) bool {
 		return false
 	}
 	t := len(pCommitment) - 1
-	res :=  pCommitment[t]
+	res := pCommitment[t]
 	for t > 0 {
 		res = ScMulElement(ToScalar(verifier), res)
 		var AddList []ed.Element
@@ -68,7 +69,7 @@ func VerifyShare(share Share, AllCommitment []PublicCommitment) bool {
 		res = ed.AddElements(AddList)
 		t--
 	}
-	if subtle.ConstantTimeCompare(shareCommitment, res) == 1  {
+	if subtle.ConstantTimeCompare(shareCommitment, res) == 1 {
 		return true
 	}
 	return false
@@ -92,6 +93,7 @@ func ToScalar(index uint32) ed.Scalar {
 	copy(out, Reverse(num))
 	return out
 }
+
 //scalar^pow mod orderL
 func ExpScalars(scalar ed.Scalar, pow ed.Scalar) ed.Scalar {
 	var result big.Int
@@ -100,6 +102,7 @@ func ExpScalars(scalar ed.Scalar, pow ed.Scalar) ed.Scalar {
 	copy(out, Reverse(result.Bytes()))
 	return out
 }
+
 //scalar1 * scalar2 mod orderL
 func MulScalars(scalar1 ed.Scalar, scalar2 ed.Scalar) ed.Scalar {
 	var result big.Int
@@ -109,6 +112,7 @@ func MulScalars(scalar1 ed.Scalar, scalar2 ed.Scalar) ed.Scalar {
 	copy(out, Reverse(result.Bytes()))
 	return out
 }
+
 //scalar1 + scalar2 mod orderL
 func AddScalars(scalar1 ed.Scalar, scalar2 ed.Scalar) ed.Scalar {
 	var result big.Int
@@ -141,13 +145,14 @@ func ScMulElement(scalarE ed.Scalar, E ed.Element) ed.Element {
 	copy(element, publicKeyBytes[:])
 	return element
 }
-func ScalarNeg(s ed.Scalar) ed.Scalar  {
+func ScalarNeg(s ed.Scalar) ed.Scalar {
 	z := BytesToBig(s)
 	z.Neg(z)
-	z.Mod(z,orderL)
+	z.Mod(z, orderL)
 	return Reverse(z.Bytes())
 
 }
+
 // used filippo.io/edwards25519
 func ScInverse(scalar ed.Scalar) ed.Scalar {
 	s := new(FiloEd.Scalar)
@@ -191,10 +196,10 @@ func SignGenLagrangeCoefficient(signer uint32, S []uint32) ed.Scalar {
 			denominator = MulScalars(denominator, AddScalars(ToScalar(s), ScalarNeg(ToScalar(signer))))
 		}
 	}
-	return  MulScalars(nominator,ScInverse(denominator)) //Inverse will panic if denominator is 0
+	return MulScalars(nominator, ScInverse(denominator)) //Inverse will panic if denominator is 0
 }
 
-func SignGenChallenge(R ed.Element, Y ed.Element ,message string) ed.Scalar {
+func SignGenChallenge(R ed.Element, Y ed.Element, message string) ed.Scalar {
 	var res []byte
 	res = append(R, Y...)
 	res = append(res, []byte(message)...)

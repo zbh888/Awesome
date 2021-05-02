@@ -11,50 +11,52 @@ type PublicCommitment struct {
 
 //For simplicity value of a share is f_sender(receiver)
 type Share struct {
-	Receiver       uint32
-	Sender         uint32
-	Value          ed.Scalar
+	Receiver uint32
+	Sender   uint32
+	Value    ed.Scalar
 }
 
 type PkgCommitment struct {
-	Index      uint32
-	Nounce_R   ed.Element
-	Nounce_u   ed.Scalar
+	Index       uint32
+	Nounce_R    ed.Element
+	Nounce_u    ed.Scalar
 	PCommitment PublicCommitment
 }
+
 //We only need this as the final keys
 type Keys struct {
-	Index uint32
-	SecretKey ed.Scalar
-	PublicKey ed.Element
+	Index          uint32
+	SecretKey      ed.Scalar
+	PublicKey      ed.Element
 	GroupPublicKey ed.Element
 }
 
 type PublicKeys struct {
-	Index uint32
-	PublicKey ed.Element
+	Index          uint32
+	PublicKey      ed.Element
 	GroupPublicKey ed.Element
 }
 
 // Here with processing type
 
 type PairOfNonceCommitments struct {
-	Index uint32
+	Index   uint32
 	Nonce_D ed.Element
 	Nonce_E ed.Element
 }
+
 //This is for storage
 type TwoPairOfNonceCommitmentAndNonce struct {
-	Nounce_d ed.Scalar
+	Nounce_d       ed.Scalar
 	NounceCommit_D ed.Element
-	Nonce_e ed.Scalar
-	NonceCommit_E ed.Element
+	Nonce_e        ed.Scalar
+	NonceCommit_E  ed.Element
 }
 
 //This is for public use
 type PairOfNonceCommitmentsList struct {
 	Index uint32
-	List []PairOfNonceCommitments
+	List  []PairOfNonceCommitments
 }
 
 //Here with sign type
