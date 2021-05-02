@@ -2,6 +2,8 @@
 
 [Flexible Round-Optimized Schnorr Threshold Signatures](https://crysp.uwaterloo.ca/software/frost/)
 
+Using GoLand
+
 ```go
 
 // Assume players all follow the rule
