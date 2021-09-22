@@ -2,7 +2,7 @@ package frost_test
 
 import (
 	"fmt"
-	"FROSTsignature/frost"
+	"github.com/zbh888/FROSTsignature/frost"
 	ed "gitlab.com/polychainlabs/threshold-ed25519/pkg"
 	"testing"
 )
