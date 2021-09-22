@@ -1,4 +1,4 @@
-module github.com/zbh888/FROSTsignature/frost
+module github.com/zbh888/FROSTsignature
 
 go 1.15
 
