@@ -13,7 +13,7 @@ Using GoLand
 func TestAlog3_CompleteMorePlayer(t *testing.T)
 ```
 
-## Testing notes
+## Testing notes - Side Channel Attack
 
 ### Keygen
 
